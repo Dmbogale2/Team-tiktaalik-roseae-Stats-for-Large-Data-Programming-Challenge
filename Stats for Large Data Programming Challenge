@@ -1,0 +1,68 @@
+Programming Challenge: Statistics for a data-rich world
+
+Nothing brings people together like watching soccer on the television! Deep into the COVID-19 pandemic, on April 3rd, 2021, the local club league's quarter final games 
+were being transmitted via Facebook live. With COVID-19 still rampant, fans in East Africa were forced to watch the game from home. Recently COVID-positive HARDCORE fans 
+were especially excited to watch the matches having been beat down by staying at home for the past two weeks. As the games came to an end, the devastating losses of many 
+teams shocked the COVID-19 victims in quarantine into terminal conditions and, ultimately, to their death. On this specific date, total confirmed deaths per 100,000 people 
+due to COVID-19 spiked, leaving researchers to find a strong positive correlation between number of soccer games and total confirmed deaths per 100,000 people due to COVID-19 
+in East Africa (p = 0.0047). 
+
+Critique on Statistical Approach
+Our analysis explored a correlation between total confirmed COVID-19 deaths per 100,000 people and a completely unrelated, randomly generated variable (soccer games played) 
+from 2021 to 2024 in East African countries. By selectively reporting only significant results and ignoring the need for a minimum sample size, we demonstrated how such practices 
+undermine statistical reliability and create the illusion of meaningful findings from purely random data. As a result we were able to show a significant correlation between 
+COVID-19 deaths per 100,000 people and soccer games played between 2021 and 2024 in East African countries.
+
+
+#--------Statistics-----------------------------------------------------------------------
+#Demonstration of P-hacking looking at the correlation between Soccer games and Deaths per 100000 people during COVID-19 in East African Nations
+
+library(dplyr)
+
+# Read the OWID COVID dataset
+data <- read.csv("estimated-cumulative-excess-deaths-per-100000-people-during-covid-19-2.csv",
+                 na.strings = "", header = TRUE)
+
+# Define East African countries
+east_africa <- c("Kenya", "Uganda", "Tanzania", "Ethiopia", "Rwanda")
+
+# Filter to East Africa AND only between 2021-01-01 and 2024-12-31
+data_east <- data %>% 
+  filter(Entity %in% east_africa & 
+           Day >= "2021-01-01" & Day <= "2024-12-31")
+
+# ---- Fake variable: Soccer games played ----
+# Simulate "soccer games played" (0–5 per day, random)
+set.seed(123) # reproducibility
+data_east$soccer_games <- sample(0:5, nrow(data_east), replace = TRUE)
+
+# ---- Analysis ----
+res <- NULL
+for (i in 1:length(unique(data_east$Day))) {
+  # Subset data for that date
+  data1 <- data_east[which(data_east$Day == unique(data_east$Day)[i]), ]
+  
+  # Select relevant columns
+  data1 <- data1 %>% select("Entity", "Day", "Total.confirmed.deaths.due.to.COVID.19.per.100.000.people", "soccer_games")
+  print(unique(data_east$Day)[i])
+  print(sum(rowSums(!is.na(data1[,3:4])) == 2))
+  
+  # Require at least 10 valid pairs (non-missing)
+ # if (sum(rowSums(!is.na(data1[,3:4])) == 2) >= 10) {
+    res <- rbind(res, c(unique(data_east$Day)[i],
+                        cor.test(data1[,3], data1[,4])$estimate,
+                        cor.test(data1[,3], data1[,4])$p.value))
+  }
+
+# Show only significant positive correlations
+Statistically_significant_correlation<-res[which((as.numeric(res[,2]) > 0) & (as.numeric(res[,3]) <= 0.05)), ]
+
+Statistically_significant_correlation <- as.data.frame(Statistically_significant_correlation, stringsAsFactors = FALSE)
+colnames(Statistically_significant_correlation) <- c("Day", "Correlation", "p.value")
+Statistically_significant_correlation$Correlation <- as.numeric(Statistically_significant_correlation$Correlation)
+Statistically_significant_correlation$p.value <- as.numeric(Statistically_significan
+t_coStatistically_significant_correlation[which.min(Statistically_significant_correlation$p.value),"Day"]rrelation$p.value)
+
+# Select data only from one specific date with the best p-value
+Statistically_significant_correlation[which.min(Statistically_significant_correlation$p.value),"Day"]
+
